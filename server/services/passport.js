@@ -29,29 +29,22 @@ passport.use(
     {                            //argument 1
     clientID: keys.googleClientID,
     clientSecret: keys.googleClientSecret,
-    callbackURL: '/auth/google/callback'
+    callbackURL: '/auth/google/callback',
+    proxy: true
     }, 
-//google profile contains the unique id or token that we want to save into user record
-    (accessToken, refreshToken, profile, done) => {                           //argument 2
+
+     async (accessToken, refreshToken, profile, done) => {
+        const existingUser = await User.findOne({googleId: profile.id})
+    
+        if (existingUser){
+        
+        return done(null, existingUser);
+        }
+
        
-//initiate a query or search over all records inside collection
-    User.findOne({googleId: profile.id})
-        .then((existingUser) => {
-            if (existingUser){
-                //we already have a record with given profile Id
-                done(null, existingUser);
-            }else{
-                //we dont have a user with this ID, make a new record
-                new User({googleId: profile.id})
-                    .save()
-                    .then(user => done(null, user));
-            }
-        });
-    }
+        const user = await new User({googleId: profile.id}).save()
+        done(null, user);
+        }
+    
 ) 
 );
-//***passport callbacks video ***
-//using promise for asynchronous code
-//creates a record, 
-//still needs to be persisted or saved
-//must call .save() function to put in db.
